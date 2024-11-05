@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clicker</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        .clicker-container {
+            text-align: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .clicker-button, .super-click-button {
+            padding: 10px 20px;
+            font-size: 20px;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+        .super-click-button {
+            margin-left: 10px;
+        }
+        .author {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="clicker-container">
+        <h1>Click Count: <span id="click-count">0</span></h1>
+        <button class="clicker-button" onclick="incrementCount()">Click Me!</button>
+        <button class="super-click-button" id="super-click-button" onclick="buySuperClick()">Buy Super Click (Cost: 10)</button>
+        <div class="author">Автор: flash_kitty</div>
+    </div>
+
+    <script>
+        let count = 0;
+        let superClickValue = 1;
+        let superClickCost = 10;
+        const userId = 'YOUR_USER_ID'; // Замените на реальный ID пользователя
+
+        async function fetchUserData() {
+            const response = await fetch(`http://localhost:5000/api/user/${userId}`);
+            const user = await response.json();
+            if (user) {
+                count = user.clicks;
+                superClickValue = user.superClickValue;
+                superClickCost = Math.floor(10 * Math.pow(1.5, superClickValue - 1));
+                document.getElementById('click-count').innerText = count;
+                document.getElementById('super-click-button').innerText = `Buy Super Click (Cost: ${superClickCost})`;
+            }
+        }
+
+        async function saveUserData() {
+            await fetch('http://localhost:5000/api/user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ clicks: count, superClickValue: superClickValue }),
+            });
+        }
+
+        function incrementCount() {
+            count += superClickValue;
+            document.getElementById('click-count').innerText = count;
+            saveUserData();
+        }
+
+        function buySuperClick() {
+            if (count >= superClickCost) {
+                count -= superClickCost;
+                superClickValue++;
+                superClickCost = Math.floor(superClickCost * 1.5);
+                document.getElementById('click-count').innerText = count;
+                document.getElementById('super-click-button').innerText = `Buy Super Click (Cost: ${superClickCost})`;
+                alert('Super Click purchased! Each click is now worth ' + superClickValue + ' points.');
+                saveUserData();
+            } else {
+                alert('Not enough clicks to buy Super Click!');
+            }
+        }
+
+        // Загрузка данных пользователя при загрузке страницы
+        window.onload = fetchUserData;
+    </script>
+</body>
+</html>
